@@ -1,0 +1,648 @@
+{% extends "store/base.html" %}
+{% load store_extras %}
+{% block title %}My Orders - ReadoIndia{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Amazon+Ember:wght@300;400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange:       #FF9900;
+    --orange-hover: #e88800;
+    --link:         #0066c0;
+    --link-hover:   #c7511f;
+    --border:       #ddd;
+    --border-dark:  #c0c0c0;
+    --bg:           #ffffff;
+    --bg-head:      #f0f2f2;
+    --bg-card:      #ffffff;
+    --bg-input:     #ffffff;
+    --text:         #111111;
+    --text-muted:   #555555;
+    --text-sub:     #888888;
+    --shadow:       0 2px 8px rgba(0,0,0,.08);
+    --radius:       8px;
+  }
+
+  body {
+    font-family: 'Amazon Ember', Arial, sans-serif;
+    background: #f7f7f7;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; color: var(--link-hover); }
+
+  .orders-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    font-size: 13px;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+  }
+  .breadcrumb a { color: var(--link); }
+  .breadcrumb span { margin: 0 4px; color: var(--text-sub); }
+
+  /* Topbar */
+  .orders-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .orders-topbar h1 { font-size: 28px; font-weight: 400; color: var(--text); }
+
+  .search-orders {
+    display: flex;
+    border: 1px solid var(--border-dark);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: var(--shadow);
+    max-width: 380px;
+    flex: 1;
+  }
+  .search-orders input {
+    flex: 1; border: none; outline: none;
+    padding: 8px 12px; font-size: 14px;
+    color: var(--text); background: transparent; min-width: 0;
+  }
+  .search-orders input::placeholder { color: var(--text-sub); }
+  .search-orders button {
+    background: var(--bg-head); border: none;
+    border-left: 1px solid var(--border);
+    padding: 8px 16px; font-size: 13px; font-weight: 700;
+    cursor: pointer; color: var(--text); white-space: nowrap;
+    transition: background .15s;
+  }
+  .search-orders button:hover { background: #e3e6e6; }
+
+  /* Tabs — Buy Again removed */
+  .orders-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 20px;
+    background: #fff;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 0 16px;
+    box-shadow: var(--shadow);
+  }
+  .orders-tabs a {
+    display: inline-block; padding: 12px 18px;
+    text-decoration: none; font-size: 14px;
+    color: var(--link); border-bottom: 3px solid transparent;
+    margin-bottom: -2px; transition: border-color .15s, color .15s;
+  }
+  .orders-tabs a.active {
+    border-bottom-color: var(--orange);
+    color: var(--text); font-weight: 700; pointer-events: none;
+  }
+  .orders-tabs a:hover:not(.active) { border-bottom-color: var(--border-dark); color: var(--link-hover); }
+
+  /* Filter row */
+  .orders-filter {
+    font-size: 14px; margin-bottom: 16px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .orders-filter strong { color: var(--text); }
+  .filter-select {
+    border: 1px solid var(--border-dark); border-radius: 4px;
+    padding: 5px 28px 5px 10px; font-size: 13px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E") no-repeat right 10px center;
+    -webkit-appearance: none; appearance: none;
+    cursor: pointer; color: var(--text);
+    box-shadow: var(--shadow); transition: border-color .15s;
+  }
+  .filter-select:focus { outline: 2px solid var(--orange); border-color: var(--orange); }
+
+  /* Order card */
+  .order-card {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 20px;
+    overflow: hidden; box-shadow: var(--shadow);
+    transition: box-shadow .2s;
+  }
+  .order-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+
+  .order-head {
+    background: var(--bg-head);
+    display: flex; flex-wrap: wrap; gap: 20px;
+    padding: 12px 20px; border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .order-head-group { display: flex; flex-wrap: wrap; gap: 28px; flex: 1; }
+
+  .order-meta-label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-sub);
+    font-weight: 700; margin-bottom: 2px;
+  }
+  .order-meta-value { font-size: 14px; font-weight: 700; color: var(--text); }
+
+  .order-id-section { margin-left: auto; text-align: right; }
+  .order-number { font-size: 13px; color: var(--text-muted); }
+  .order-number strong { color: var(--text); font-weight: 700; }
+
+  .order-head-links {
+    display: flex; gap: 12px; margin-top: 4px;
+    flex-wrap: wrap; justify-content: flex-end;
+  }
+  .order-head-links a { font-size: 13px; color: var(--link); }
+  .order-head-links a:hover { color: var(--link-hover); }
+  .divider-pipe { color: var(--border); }
+
+  /* Order body */
+  .order-body {
+    padding: 16px 20px;
+    display: flex; flex-wrap: wrap; gap: 16px;
+  }
+  .order-items-section { flex: 1; min-width: 200px; }
+
+  .order-delivery {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 12px;
+  }
+  .delivery-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 18px; font-weight: 700; color: var(--text);
+  }
+  .delivery-badge .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #007600; display: inline-block;
+  }
+  .delivery-badge.pending .dot  { background: var(--orange); }
+  .delivery-badge.processing .dot { background: #0066c0; }
+
+  /* Item rows */
+  .order-item-row {
+    display: flex; gap: 14px; align-items: flex-start;
+    margin-bottom: 14px; padding-bottom: 14px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .order-item-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .item-thumb {
+    width: 80px; height: 100px; object-fit: contain;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: #fafafa; flex-shrink: 0;
+  }
+  .item-thumb-placeholder {
+    width: 80px; height: 100px;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: #f5f5f5; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; color: #aaa;
+  }
+
+  .item-info { flex: 1; }
+  .item-title {
+    font-size: 14px; font-weight: 400; color: var(--link);
+    text-decoration: none; line-height: 1.4;
+    display: block; margin-bottom: 4px;
+  }
+  .item-title:hover { text-decoration: underline; color: var(--link-hover); }
+  .item-qty-price { font-size: 13px; color: var(--text-sub); margin-bottom: 4px; }
+  .item-line-total { font-size: 14px; font-weight: 700; color: var(--text); }
+
+  /* Status pills */
+  .status-pill {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    padding: 2px 10px; border-radius: 12px; margin-top: 6px;
+  }
+  .status-pill.delivered  { background: #e7f5e7; color: #007600; border: 1px solid #b8dfb8; }
+  .status-pill.processing { background: #e8f0fe; color: #0055a5; border: 1px solid #b0c8f0; }
+  .status-pill.pending    { background: #fef5e4; color: #7a4f00; border: 1px solid #f0d080; }
+  .status-pill.cancelled  { background: #fce8e6; color: #a50000; border: 1px solid #f0b0b0; }
+
+  /* Action buttons */
+  .order-actions {
+    display: flex; flex-direction: column; gap: 8px;
+    min-width: 175px; width: 175px; flex-shrink: 0; padding-top: 4px;
+  }
+  @media (max-width: 600px) { .order-actions { width: 100%; } }
+
+  .btn-action {
+    display: block; width: 100%;
+    padding: 8px 12px; border-radius: 20px;
+    border: 1px solid var(--border-dark);
+    background: linear-gradient(to bottom, #f7f8fa 0%, #e8eaed 100%);
+    font-size: 13px; font-weight: 400;
+    color: var(--text); cursor: pointer;
+    text-align: center; text-decoration: none;
+    transition: background .12s, border-color .12s, box-shadow .12s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .btn-action:hover {
+    background: linear-gradient(to bottom, #eef0f3 0%, #dfe1e6 100%);
+    border-color: #0066c0; color: #0066c0;
+    box-shadow: 0 2px 6px rgba(0,102,192,.12);
+    text-decoration: none;
+  }
+  .btn-action.primary {
+    background: linear-gradient(to bottom, #f0c14b 0%, #e8a510 100%);
+    border-color: #a88734; color: #111;
+  }
+  .btn-action.primary:hover {
+    background: linear-gradient(to bottom, #f4cc5e 0%, #ebb318 100%);
+    color: #111;
+  }
+  .btn-action.help {
+    background: linear-gradient(to bottom, #fff8f0 0%, #ffecd8 100%);
+    border-color: #e8a510; color: #7a4f00;
+  }
+  .btn-action.help:hover {
+    background: linear-gradient(to bottom, #fff3e0 0%, #ffe0b2 100%);
+    border-color: #FF9900; color: #5a3800;
+  }
+
+  /* Invoice dropdown */
+  .invoice-dropdown { position: relative; display: inline-block; }
+  .invoice-dropdown button {
+    background: none; border: none; color: var(--link);
+    font-size: 13px; cursor: pointer; padding: 0;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .invoice-dropdown button:hover { text-decoration: underline; color: var(--link-hover); }
+  .invoice-dropdown button::after { content: '▼'; font-size: 8px; vertical-align: middle; margin-left: 2px; }
+
+  /* Invoice Modal */
+  .invoice-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.55); z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 16px; backdrop-filter: blur(3px);
+    animation: fadeIn .18s ease;
+  }
+  .invoice-overlay.open { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .invoice-modal {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 12px; width: 100%; max-width: 580px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0,0,0,.18);
+    animation: slideUp .22s ease; position: relative;
+  }
+  .invoice-modal-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg-head); border-radius: 12px 12px 0 0;
+  }
+  .invoice-brand .brand-name { font-size: 22px; font-weight: 700; color: var(--orange); }
+  .invoice-brand .brand-tagline { font-size: 11px; color: var(--text-sub); letter-spacing: .5px; text-transform: uppercase; }
+  .invoice-title-block { text-align: right; }
+  .invoice-title-block h2 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .invoice-title-block .inv-number { font-size: 12px; color: var(--text-sub); }
+
+  .invoice-modal-close {
+    position: absolute; top: 14px; right: 16px;
+    background: none; border: none; color: var(--text-sub);
+    font-size: 20px; cursor: pointer; line-height: 1;
+    padding: 4px 8px; border-radius: 4px;
+    transition: color .12s, background .12s;
+  }
+  .invoice-modal-close:hover { color: var(--text); background: #e8eaed; }
+
+  .invoice-modal-body { padding: 20px 24px; }
+
+  .invoice-meta-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 20px;
+  }
+  @media (max-width: 480px) { .invoice-meta-grid { grid-template-columns: 1fr; } }
+
+  .invoice-meta-box {
+    background: #fafafa; border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+  }
+  .invoice-meta-box .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-sub); font-weight: 700; margin-bottom: 5px; }
+  .invoice-meta-box .meta-value { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+  .invoice-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .invoice-table thead tr { border-bottom: 2px solid var(--border); }
+  .invoice-table thead th { padding: 8px 10px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .7px; color: var(--text-sub); font-weight: 700; }
+  .invoice-table thead th:last-child { text-align: right; }
+  .invoice-table tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .1s; }
+  .invoice-table tbody tr:hover { background: #fafafa; }
+  .invoice-table tbody tr:last-child { border-bottom: none; }
+  .invoice-table tbody td { padding: 10px; color: var(--text); vertical-align: top; }
+  .invoice-table tbody td:last-child { text-align: right; font-weight: 600; }
+  .inv-item-title { font-weight: 500; margin-bottom: 2px; }
+  .inv-item-sub { font-size: 11px; color: var(--text-sub); }
+
+  .invoice-totals { border-top: 1px solid var(--border); padding-top: 12px; margin-left: auto; width: 240px; }
+  @media (max-width: 480px) { .invoice-totals { width: 100%; } }
+  .invoice-totals-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; color: var(--text-muted); }
+  .invoice-totals-row.total-final { border-top: 2px solid var(--border); margin-top: 6px; padding-top: 8px; font-size: 15px; font-weight: 700; color: var(--text); }
+  .invoice-totals-row span:last-child { color: var(--text); }
+  .invoice-totals-row.total-final span:last-child { color: var(--orange); }
+
+  .inv-status { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .inv-status.paid    { background: #e7f5e7; color: #007600; border: 1px solid #b8dfb8; }
+  .inv-status.pending { background: #fef5e4; color: #7a4f00; border: 1px solid #f0d080; }
+
+  .invoice-modal-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 14px 24px 20px; border-top: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .inv-btn {
+    padding: 8px 20px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent;
+  }
+  .inv-btn-ghost { background: transparent; border-color: var(--border-dark); color: var(--text-muted); }
+  .inv-btn-ghost:hover { border-color: #0066c0; color: #0066c0; background: rgba(0,102,192,.05); }
+  .inv-btn-primary { background: linear-gradient(to bottom, #f0c14b, #e8a510); border-color: #a88734; color: #111; }
+  .inv-btn-primary:hover { background: linear-gradient(to bottom, #f4cc5e, #ebb318); }
+
+  .inv-note { font-size: 11px; color: var(--text-sub); text-align: center; padding: 0 24px 16px; line-height: 1.5; }
+
+  /* Empty state */
+  .empty-state {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 48px 32px;
+    text-align: center; box-shadow: var(--shadow);
+  }
+  .empty-state-icon { font-size: 56px; margin-bottom: 16px; display: block; opacity: .4; }
+  .empty-state h2 { font-size: 21px; font-weight: 400; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+  .empty-state a {
+    display: inline-block; padding: 10px 24px;
+    background: linear-gradient(to bottom, #f0c14b, #e8a510);
+    border: 1px solid #a88734; border-radius: 3px;
+    font-size: 14px; font-weight: 700; color: #111; text-decoration: none;
+  }
+  .empty-state a:hover { background: linear-gradient(to bottom, #f4cc5e, #ebb318); }
+</style>
+
+<!-- Invoice Modal -->
+<div class="invoice-overlay" id="invoiceOverlay">
+  <div class="invoice-modal" role="dialog" aria-modal="true" aria-labelledby="invModalTitle">
+    <div class="invoice-modal-header">
+      <div class="invoice-brand">
+        <span class="brand-name">ReadoIndia</span>
+        <span class="brand-tagline">Tax Invoice / Receipt</span>
+      </div>
+      <div class="invoice-title-block">
+        <h2 id="invModalTitle">Invoice</h2>
+        <div class="inv-number" id="invNumber">—</div>
+      </div>
+      <button class="invoice-modal-close" onclick="closeInvoice()" aria-label="Close">✕</button>
+    </div>
+    <div class="invoice-modal-body">
+      <div class="invoice-meta-grid">
+        <div class="invoice-meta-box"><div class="meta-label">Order Date</div><div class="meta-value" id="invOrderDate">—</div></div>
+        <div class="invoice-meta-box"><div class="meta-label">Status</div><div class="meta-value" id="invStatus">—</div></div>
+        <div class="invoice-meta-box"><div class="meta-label">Billed To</div><div class="meta-value" id="invBilledTo">—</div></div>
+        <div class="invoice-meta-box"><div class="meta-label">Delivery Date</div><div class="meta-value" id="invDeliveryDate">—</div></div>
+      </div>
+      <table class="invoice-table">
+        <thead>
+          <tr><th style="width:50%">Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
+        </thead>
+        <tbody id="invItemsBody"></tbody>
+      </table>
+      <div class="invoice-totals">
+        <div class="invoice-totals-row"><span>Subtotal</span><span id="invSubtotal">—</span></div>
+        <div class="invoice-totals-row"><span>Shipping</span><span id="invShipping">Free</span></div>
+        <div class="invoice-totals-row"><span>Tax (GST 5%)</span><span id="invTax">—</span></div>
+        <div class="invoice-totals-row total-final"><span>Total Paid</span><span id="invTotal">—</span></div>
+      </div>
+    </div>
+    <div class="inv-note">This is a computer-generated invoice and does not require a physical signature.</div>
+    <div class="invoice-modal-footer">
+      <button class="inv-btn inv-btn-ghost" onclick="closeInvoice()">Close</button>
+      <button class="inv-btn inv-btn-ghost" onclick="printInvoice()">🖨 Print</button>
+      <button class="inv-btn inv-btn-primary" onclick="downloadInvoice()">⬇ Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="orders-wrapper">
+
+  <nav class="breadcrumb">
+    <a href="{% url 'home' %}">Your Account</a>
+    <span>›</span>
+    <span>Your Orders</span>
+  </nav>
+
+  <div class="orders-topbar">
+    <h1>Your Orders</h1>
+    <form class="search-orders" method="get" action="">
+      <input type="search" name="q" placeholder="Search all orders" value="{{ request.GET.q }}" aria-label="Search orders">
+      <button type="submit">Search Orders</button>
+    </form>
+  </div>
+
+  <!-- Tabs: Buy Again removed -->
+  <nav class="orders-tabs">
+    <a href="?tab=orders" class="active">Orders</a>
+    <a href="?tab=not_shipped">Not Yet Shipped</a>
+  </nav>
+
+  <div class="orders-filter">
+    <strong>{{ orders|length }} order{% if orders|length != 1 %}s{% endif %}</strong>
+    placed in
+    <select class="filter-select" onchange="location.search='?period='+this.value">
+      <option value="3months" {% if request.GET.period == '3months' or not request.GET.period %}selected{% endif %}>past 3 months</option>
+      <option value="6months" {% if request.GET.period == '6months' %}selected{% endif %}>past 6 months</option>
+      <option value="year"    {% if request.GET.period == 'year' %}selected{% endif %}>past year</option>
+      <option value="2years"  {% if request.GET.period == '2years' %}selected{% endif %}>2023</option>
+    </select>
+  </div>
+
+  {% for order in orders %}
+  <div class="order-card">
+
+    <div class="order-head">
+      <div class="order-head-group">
+        <div>
+          <div class="order-meta-label">Order placed</div>
+          <div class="order-meta-value">{{ order.order_date|date:"d M Y" }}</div>
+        </div>
+        <div>
+          <div class="order-meta-label">Total</div>
+          <div class="order-meta-value">{{ order.total|inr }}</div>
+        </div>
+        <div>
+          <div class="order-meta-label">Ship to</div>
+          <div class="order-meta-value">{% if order.contact_number %}{{ order.contact_number }}{% else %}—{% endif %}</div>
+        </div>
+      </div>
+      <div class="order-id-section">
+        <div class="order-number">ORDER # <strong>BK-{{ order.id|stringformat:"06d" }}</strong></div>
+        <div class="order-head-links">
+          <span class="divider-pipe">|</span>
+          <div class="invoice-dropdown">
+            <button type="button" onclick="openInvoice({
+              id: '{{ order.id|stringformat:"06d" }}',
+              date: '{{ order.order_date|date:"d M Y" }}',
+              delivery: '{{ order.delivery_date|date:"d M Y" }}',
+              contact: '{{ order.contact_number|default:"—" }}',
+              status: '{{ order.get_status_display }}',
+              total: '{{ order.total|inr }}',
+              items: [{% for item in order.items.all %}{ title: '{{ item.product.title|escapejs }}', author: '{{ item.product.author|default:""|escapejs }}', qty: {{ item.quantity }}, price: '{{ item.product.price|inr }}', line: '{{ item.line_total|inr }}' }{% if not forloop.last %},{% endif %}{% endfor %}]
+            })">Invoice</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="order-body">
+      <div class="order-items-section">
+
+        <div class="order-delivery">
+          {% if order.get_status_display == 'Delivered' %}
+            <span class="delivery-badge"><span class="dot"></span>Delivered {{ order.delivery_date|date:"d M Y" }}</span>
+          {% elif order.get_status_display == 'Processing' %}
+            <span class="delivery-badge processing"><span class="dot"></span>Arriving {{ order.delivery_date|date:"d M Y" }}</span>
+          {% else %}
+            <span class="delivery-badge pending"><span class="dot"></span>{{ order.get_status_display }}</span>
+          {% endif %}
+        </div>
+
+        {% for item in order.items.all %}
+        <div class="order-item-row">
+          {% if item.product.image_url %}
+            <img class="item-thumb" src="{{ item.product.image_url }}" alt="{{ item.product.title }}">
+          {% else %}
+            <div class="item-thumb-placeholder">📚</div>
+          {% endif %}
+          <div class="item-info">
+            <a class="item-title" href="{% url 'product_detail' item.product.pk %}">{{ item.product.title }}</a>
+            {% if item.product.author %}<div class="item-qty-price">by {{ item.product.author }}</div>{% endif %}
+            <div class="item-qty-price">Qty: {{ item.quantity }}</div>
+            <div class="item-line-total">{{ item.line_total|inr }}</div>
+            {% if item.product.format %}<div class="item-qty-price">{{ item.product.format }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+
+      <div class="order-actions">
+        <a class="btn-action" href="{% url 'order_detail' order.id %}">View order details</a>
+        {% if order.get_status_display == 'Delivered' %}
+          <a class="btn-action" href="{% url 'order_detail' order.id %}">Write a product review</a>
+          <a class="btn-action" href="{% url 'order_detail' order.id %}">Return or replace items</a>
+        {% endif %}
+        <a class="btn-action" href="{% url 'order_detail' order.id %}#tracking">Track package</a>
+        {% if order.get_status_display == 'Pending' or order.get_status_display == 'Processing' %}
+          <a class="btn-action" href="{% url 'order_detail' order.id %}">Cancel items</a>
+        {% endif %}
+        <!-- Help button at bottom of every order -->
+        <a class="btn-action help" href="{% url 'order_detail' order.id %}#help">🤝 Get help with order</a>
+      </div>
+
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state">
+    <span class="empty-state-icon">📦</span>
+    <h2>No orders placed yet</h2>
+    <p>You have not placed any orders in the past 3 months. Browse our collection to get started.</p>
+    <a href="{% url 'home' %}">Continue Shopping</a>
+  </div>
+  {% endfor %}
+
+</div>
+
+<script>
+function openInvoice(order) {
+  document.getElementById('invNumber').textContent = 'INV-' + String(order.id).padStart(6, '0');
+  document.getElementById('invOrderDate').textContent = order.date;
+  document.getElementById('invDeliveryDate').textContent = order.delivery || '—';
+  document.getElementById('invBilledTo').textContent = order.contact;
+
+  const isPaid = order.status === 'Delivered';
+  document.getElementById('invStatus').innerHTML =
+    `<span class="inv-status ${isPaid ? 'paid' : 'pending'}">${isPaid ? '✓ Paid' : order.status}</span>`;
+
+  const tbody = document.getElementById('invItemsBody');
+  tbody.innerHTML = '';
+  order.items.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="inv-item-title">${item.title}</div>${item.author ? `<div class="inv-item-sub">by ${item.author}</div>` : ''}</td>
+      <td>${item.qty}</td><td>${item.price}</td><td>${item.line}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const raw = order.total.replace(/[^\d.]/g, '');
+  const totalNum = parseFloat(raw) || 0;
+  const tax = totalNum * 0.05;
+  const subtotalNum = totalNum - tax;
+  const fmt = n => '₹' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  document.getElementById('invSubtotal').textContent = fmt(subtotalNum);
+  document.getElementById('invShipping').textContent = 'Free';
+  document.getElementById('invTax').textContent = fmt(tax);
+  document.getElementById('invTotal').textContent = order.total;
+
+  document.getElementById('invoiceOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window._currentInvoice = order;
+}
+
+function closeInvoice() {
+  document.getElementById('invoiceOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('invoiceOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeInvoice();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeInvoice(); });
+
+function printInvoice() {
+  const order = window._currentInvoice;
+  if (!order) return;
+  const rows = order.items.map(i =>
+    `<tr><td>${i.title}${i.author ? '<br><small style="color:#888">by ' + i.author + '</small>' : ''}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${i.price}</td><td style="text-align:right">${i.line}</td></tr>`).join('');
+  const raw = order.total.replace(/[^\d.]/g, '');
+  const totalNum = parseFloat(raw) || 0;
+  const tax = totalNum * 0.05;
+  const sub = totalNum - tax;
+  const fmt = n => '₹' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice INV-${String(order.id).padStart(6,'0')}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:40px;background:#fff}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;border-bottom:2px solid #FF9900;padding-bottom:16px}.brand{font-size:26px;font-weight:700;color:#FF9900}.brand-sub{font-size:11px;color:#777;margin-top:3px}.inv-title{text-align:right}.inv-title h2{font-size:22px}.inv-title p{font-size:12px;color:#777;margin-top:4px}.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}.meta-box{background:#f8f8f8;border:1px solid #e0e0e0;border-radius:6px;padding:10px 14px}.meta-box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#888;margin-bottom:4px;font-weight:700}.meta-box .val{font-size:13px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead{background:#f0f0f0}th{padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;color:#555;border-bottom:2px solid #ddd}th:last-child,td:last-child{text-align:right}td{padding:10px;border-bottom:1px solid #eee}.totals{margin-left:auto;width:240px}.tot-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#555}.tot-row.final{border-top:2px solid #ddd;margin-top:6px;padding-top:8px;font-weight:700;font-size:15px;color:#111}.tot-row.final span:last-child{color:#FF9900}.footer{margin-top:40px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:16px}</style></head><body><div class="header"><div><div class="brand">ReadoIndia</div><div class="brand-sub">Tax Invoice / Receipt</div></div><div class="inv-title"><h2>Invoice</h2><p>INV-${String(order.id).padStart(6,'0')}</p></div></div><div class="meta-grid"><div class="meta-box"><div class="lbl">Order Date</div><div class="val">${order.date}</div></div><div class="meta-box"><div class="lbl">Status</div><div class="val">${order.status}</div></div><div class="meta-box"><div class="lbl">Billed To</div><div class="val">${order.contact}</div></div><div class="meta-box"><div class="lbl">Delivery Date</div><div class="val">${order.delivery||'—'}</div></div></div><table><thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div class="tot-row"><span>Subtotal</span><span>${fmt(sub)}</span></div><div class="tot-row"><span>Shipping</span><span>Free</span></div><div class="tot-row"><span>Tax (GST 5%)</span><span>${fmt(tax)}</span></div><div class="tot-row final"><span>Total Paid</span><span>${order.total}</span></div></div><div class="footer">Computer-generated invoice. No signature required.<br>Thank you for shopping with ReadoIndia!</div><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}<\/script></body></html>`;
+  const w = window.open('', '_blank', 'width=800,height=600');
+  w.document.write(html); w.document.close();
+}
+
+function downloadInvoice() {
+  const order = window._currentInvoice;
+  if (!order) return;
+  const rows = order.items.map(i =>
+    `<tr><td>${i.title}${i.author ? '<br><small style="color:#888">by ' + i.author + '</small>' : ''}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${i.price}</td><td style="text-align:right">${i.line}</td></tr>`).join('');
+  const raw = order.total.replace(/[^\d.]/g, '');
+  const totalNum = parseFloat(raw) || 0;
+  const tax = totalNum * 0.05;
+  const sub = totalNum - tax;
+  const fmt = n => '₹' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice INV-${String(order.id).padStart(6,'0')}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:40px;background:#fff}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;border-bottom:2px solid #FF9900;padding-bottom:16px}.brand{font-size:26px;font-weight:700;color:#FF9900}.brand-sub{font-size:11px;color:#777;margin-top:3px}.inv-title{text-align:right}.inv-title h2{font-size:22px}.inv-title p{font-size:12px;color:#777;margin-top:4px}.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}.meta-box{background:#f8f8f8;border:1px solid #e0e0e0;border-radius:6px;padding:10px 14px}.meta-box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#888;margin-bottom:4px;font-weight:700}.meta-box .val{font-size:13px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead{background:#f0f0f0}th{padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;color:#555;border-bottom:2px solid #ddd}th:last-child,td:last-child{text-align:right}td{padding:10px;border-bottom:1px solid #eee}.totals{margin-left:auto;width:240px}.tot-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#555}.tot-row.final{border-top:2px solid #ddd;margin-top:6px;padding-top:8px;font-weight:700;font-size:15px;color:#111}.tot-row.final span:last-child{color:#FF9900}.footer{margin-top:40px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:16px}</style></head><body><div class="header"><div><div class="brand">ReadoIndia</div><div class="brand-sub">Tax Invoice / Receipt</div></div><div class="inv-title"><h2>Invoice</h2><p>INV-${String(order.id).padStart(6,'0')}</p></div></div><div class="meta-grid"><div class="meta-box"><div class="lbl">Order Date</div><div class="val">${order.date}</div></div><div class="meta-box"><div class="lbl">Status</div><div class="val">${order.status}</div></div><div class="meta-box"><div class="lbl">Billed To</div><div class="val">${order.contact}</div></div><div class="meta-box"><div class="lbl">Delivery Date</div><div class="val">${order.delivery||'—'}</div></div></div><table><thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div class="tot-row"><span>Subtotal</span><span>${fmt(sub)}</span></div><div class="tot-row"><span>Shipping</span><span>Free</span></div><div class="tot-row"><span>Tax (GST 5%)</span><span>${fmt(tax)}</span></div><div class="tot-row final"><span>Total Paid</span><span>${order.total}</span></div></div><div class="footer">Computer-generated invoice. No signature required.<br>Thank you for shopping with ReadoIndia!</div></body></html>`;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ReadoIndia-INV-${String(order.id).padStart(6,'0')}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+
+{% endblock %}

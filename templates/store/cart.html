@@ -1,0 +1,248 @@
+{% extends "store/base.html" %}
+{% load store_extras %}
+{% block title %}Cart - ReadoIndia{% endblock %}
+
+{% block content %}
+<section class="page-grid">
+  <div class="panel">
+    <div class="cart-header">
+      <h1>Shopping cart</h1>
+      {% if lines %}
+        <label class="select-all-label">
+          <input type="checkbox" id="selectAll"> Select all items
+        </label>
+      {% endif %}
+    </div>
+
+    {% if lines %}
+      <form id="cartForm" method="get" action="{% url 'checkout' %}">
+        {% for line in lines %}
+          <article class="cart-line" data-price="{{ line.line_total }}">
+
+            <label class="cart-check" aria-label="Select {{ line.product.title }}">
+              <input
+                type="checkbox"
+                name="selected_ids"
+                value="{{ line.product.id }}"
+                class="item-checkbox"
+                {% if not preselected_ids or line.product.id|stringformat:"s" in preselected_ids %}checked{% endif %}
+              >
+              <span class="checkmark">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="3"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </span>
+            </label>
+
+            <img src="{{ line.product.image_url }}" alt="{{ line.product.title }}">
+
+            <div class="cart-line__info">
+              <h2>{{ line.product.title }}</h2>
+              <p>
+                {{ line.product.price|inr }} x {{ line.quantity }}
+                = <strong>{{ line.line_total|inr }}</strong>
+              </p>
+              <div class="qty-row">
+                <a class="qty-link"
+                   href="{% url 'update_cart' line.product.id 'dec' %}"
+                   data-product-id="{{ line.product.id }}"
+                   data-action="dec">-</a>
+                <strong>{{ line.quantity }}</strong>
+                <a class="qty-link"
+                   href="{% url 'update_cart' line.product.id 'inc' %}"
+                   data-product-id="{{ line.product.id }}"
+                   data-action="inc">+</a>
+                <a class="qty-link remove-btn"
+                   href="{% url 'update_cart' line.product.id 'remove' %}"
+                   data-product-id="{{ line.product.id }}"
+                   data-action="remove">Remove</a>
+              </div>
+            </div>
+
+          </article>
+        {% endfor %}
+      </form>
+
+    {% else %}
+      <div class="empty-state">Cart is empty. Add books from the home page.</div>
+    {% endif %}
+  </div>
+
+  {% if lines %}
+  <aside class="summary panel">
+    <h2>Price details</h2>
+    <div class="totals">
+      <span>Selected items</span>
+      <strong id="summaryCount">0</strong>
+    </div>
+    <div class="totals">
+      <span>Subtotal</span>
+      <strong id="summarySubtotal">₹0</strong>
+    </div>
+    <div class="totals">
+      <span>Delivery</span>
+      <strong>{% if delivery %}{{ delivery|inr }}{% else %}Free{% endif %}</strong>
+    </div>
+    <div class="totals grand">
+      <span>Total</span>
+      <strong id="summaryTotal">₹0</strong>
+    </div>
+    <button type="button" class="primary-btn block" id="checkoutBtn">
+      Proceed to checkout
+    </button>
+    <p class="cart-select-note" id="selectNote" hidden>
+      Please select at least one item to checkout.
+    </p>
+  </aside>
+  {% endif %}
+</section>
+
+<style>
+.cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cart-header h1 { margin: 0; }
+.select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #1769aa;
+}
+.select-all-label input { display: none; }
+.cart-line {
+  display: grid;
+  grid-template-columns: 36px 86px 1fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: start;
+  transition: opacity 0.2s;
+}
+.cart-line.deselected { opacity: 0.42; }
+.cart-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 28px;
+  cursor: pointer;
+}
+.cart-check input { display: none; }
+.checkmark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid #c8d0d8;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.checkmark svg { display: none; color: #fff; }
+.cart-check input:checked ~ .checkmark { background: #087443; border-color: #087443; }
+.cart-check input:checked ~ .checkmark svg { display: block; }
+.cart-line__info h2 { font-size: 16px; margin: 0 0 6px; line-height: 1.35; }
+.cart-select-note { margin: 10px 0 0; font-size: 13px; color: #b42318; text-align: center; }
+</style>
+
+<script>
+(function () {
+  var checkboxes = document.querySelectorAll('.item-checkbox');
+  var selectAll  = document.getElementById('selectAll');
+  var countEl    = document.getElementById('summaryCount');
+  var subEl      = document.getElementById('summarySubtotal');
+  var totalEl    = document.getElementById('summaryTotal');
+  var btn        = document.getElementById('checkoutBtn');
+  var note       = document.getElementById('selectNote');
+  var delivery   = {{ delivery|default:0 }};
+
+  function formatINR(n) {
+    return '₹' + n.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  function getSelectedIds() {
+    var ids = [];
+    checkboxes.forEach(function (cb) { if (cb.checked) ids.push(cb.value); });
+    return ids;
+  }
+
+  function update() {
+    var count = 0, subtotal = 0;
+    checkboxes.forEach(function (cb) {
+      var article = cb.closest('.cart-line');
+      if (cb.checked) {
+        count++;
+        subtotal += parseFloat(article.dataset.price || 0);
+        article.classList.remove('deselected');
+      } else {
+        article.classList.add('deselected');
+      }
+    });
+    countEl.textContent = count + ' item' + (count !== 1 ? 's' : '');
+    subEl.textContent   = formatINR(subtotal);
+    totalEl.textContent = formatINR(subtotal + (count > 0 ? delivery : 0));
+    var allChecked  = count === checkboxes.length;
+    var noneChecked = count === 0;
+    if (selectAll) {
+      selectAll.checked       = allChecked;
+      selectAll.indeterminate = !allChecked && !noneChecked;
+    }
+    btn.disabled      = noneChecked;
+    btn.style.opacity = noneChecked ? '0.5' : '1';
+    note.hidden       = !noneChecked;
+  }
+
+  /* Select all */
+  selectAll && selectAll.addEventListener('change', function () {
+    checkboxes.forEach(function (cb) { cb.checked = selectAll.checked; });
+    update();
+  });
+
+  /* Individual checkbox */
+  checkboxes.forEach(function (cb) { cb.addEventListener('change', update); });
+
+  /* +/- / Remove — append selected_ids to the Django-generated href */
+  document.querySelectorAll('.qty-link').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var selected = getSelectedIds();
+      var base     = a.getAttribute('href'); /* e.g. /cart/update/3/inc/ */
+      window.location.href = base + '?' + qs;
+      if (selected.length) {
+        var qs = selected.map(function (id) { return 'selected_ids=' + id; }).join('&');
+        window.location.href = base + '?' + qs;
+      } else {
+        window.location.href = base;
+      }
+    });
+  });
+
+  /* Checkout */
+  btn && btn.addEventListener('click', function () {
+    var selected = getSelectedIds();
+    if (!selected.length) return;
+    var form = document.getElementById('cartForm');
+    form.querySelectorAll('input[name="selected_ids"]').forEach(function (el) { el.remove(); });
+    selected.forEach(function (id) {
+      var h = document.createElement('input');
+      h.type = 'hidden'; h.name = 'selected_ids'; h.value = id;
+      form.appendChild(h);
+    });
+    form.method = 'get';
+    form.submit();
+  });
+
+  update();
+})();
+</script>
+{% endblock %}

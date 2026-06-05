@@ -1,0 +1,279 @@
+{% load static %}
+{% comment %}
+  ReadoIndia — Amazon-style Footer
+  Place this just before </body> in your base.html,
+  right after <script src="{% static 'store/app.js' %}" defer></script>
+{% endcomment %}
+
+<footer class="ri-footer">
+
+  <!-- Back to top -->
+  <button class="ri-footer__totop" id="riToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    Back to top
+  </button>
+
+  <!-- Main columns -->
+  <div class="ri-footer__main">
+
+    <!-- Col 1: Brand -->
+    <div class="ri-footer__col ri-footer__col--brand">
+      <a href="{% url 'home' %}" class="ri-footer__logo">
+        <img src="{% static 'image/logo.png' %}" alt="ReadoIndia" style="height:48px;width:auto;filter:brightness(0) invert(1);">
+      </a>
+      <p class="ri-footer__tagline">India's favourite online bookstore. Millions of titles, delivered to your door.</p>
+      <!-- Social icons -->
+      <div class="ri-footer__social">
+        <a href="#" aria-label="Facebook"  class="ri-soc">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        </a>
+        <a href="#" aria-label="Instagram" class="ri-soc">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a href="#" aria-label="Twitter / X"  class="ri-soc">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4l16 16M20 4 4 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M2 4h5.5L20 20h-5.5z"/></svg>
+        </a>
+        <a href="#" aria-label="YouTube"   class="ri-soc">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.95C5.12 20 12 20 12 20s6.88 0 8.59-.47a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#182331"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Col 2: Browse -->
+    <div class="ri-footer__col">
+      <h3 class="ri-footer__heading">Browse</h3>
+      <ul class="ri-footer__list">
+        <li><a href="{% url 'home' %}">All Books</a></li>
+        <li><a href="{% url 'home' %}?category=top">Top Rated</a></li>
+        <li><a href="{% url 'home' %}?category=budget">Budget Picks</a></li>
+        <li><a href="{% url 'home' %}?category=premium">Premium</a></li>
+        <li><a href="{% url 'home' %}?sort=newest">New Arrivals</a></li>
+        <li><a href="{% url 'home' %}?sale=true">Deals &amp; Offers</a></li>
+      </ul>
+    </div>
+
+    <!-- Col 3: Account -->
+    <div class="ri-footer__col">
+      <h3 class="ri-footer__heading">Your Account</h3>
+      <ul class="ri-footer__list">
+        {% if user.is_authenticated %}
+          <li><a href="{% url 'account' %}">My Account</a></li>
+          <li><a href="{% url 'orders' %}">Order History</a></li>
+          <li><a href="{% url 'cart' %}">Cart</a></li>
+          <li><a href="{% url 'edit_profile' %}">Edit Profile</a></li>
+          <li><a href="{% url 'logout' %}">Sign Out</a></li>
+        {% else %}
+          <li><a href="{% url 'signin' %}">Sign In</a></li>
+          <li><a href="{% url 'signup' %}">Create Account</a></li>
+          <li><a href="{% url 'cart' %}">Cart</a></li>
+        {% endif %}
+      </ul>
+    </div>
+
+    <!-- Col 4: Help -->
+    <div class="ri-footer__col">
+      <h3 class="ri-footer__heading">Help</h3>
+      <ul class="ri-footer__list">
+        <li><a href="#">Shipping &amp; Delivery</a></li>
+        <li><a href="#">Returns Policy</a></li>
+        <li><a href="#">Track Your Order</a></li>
+        <li><a href="#">Payment Methods</a></li>
+        <li><a href="#">Contact Us</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+
+    <!-- Col 5: App download -->
+    <div class="ri-footer__col">
+      <h3 class="ri-footer__heading">Get the App</h3>
+      <p class="ri-footer__app-copy">Shop faster with the ReadoIndia mobile app.</p>
+      <div class="ri-footer__badges">
+        <a href="#" class="ri-badge-btn" aria-label="Download on the App Store">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <span><small>Download on the</small>App Store</span>
+        </a>
+        <a href="#" class="ri-badge-btn" aria-label="Get it on Google Play">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="m3 20.5v-17c0-.83 1-.83 1.5-.5l14 8.5-14 8.5c-.5.33-1.5.33-1.5-.5z" opacity=".6"/><path d="m3 3.5 10 10-10 7c0 .83 1 .83 1.5.5l11.5-7-3-3z" opacity=".8"/><path d="m14.5 16.5-11.5 7c.5.33 1.5.33 1.5-.5v-.5l10-6z"/><path d="m16 11.5-2 2 2.5 2.5 3-1.5z" opacity=".9"/></svg>
+          <span><small>Get it on</small>Google Play</span>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /ri-footer__main -->
+
+  <!-- Divider -->
+  <div class="ri-footer__divider"></div>
+
+  <!-- Bottom bar -->
+  <div class="ri-footer__bottom">
+    <p class="ri-footer__copy">&copy; {% now "Y" %} ReadoIndia. All rights reserved. Designed Developed By <a href="https://sagveektechnologies.in/" target="_blank" rel="noopener"> Sagveek Technologies Pvt. Ltd.</a>.</p>
+    <nav class="ri-footer__legal" aria-label="Legal links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Use</a>
+      <a href="#">Cookie Settings</a>
+    </nav>
+  </div>
+
+</footer>
+
+
+<!-- ========== FOOTER STYLES — add to styles.css ========== -->
+<style>
+.ri-footer {
+  margin-top: 48px;
+  background: #0f1923;
+  color: #c8d3dc;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+/* Back to top */
+.ri-footer__totop {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #232f3e;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.ri-footer__totop:hover { background: #2e3f52; }
+
+/* Main columns grid */
+.ri-footer__main {
+  display: grid;
+  grid-template-columns: 240px repeat(3, 1fr) 200px;
+  gap: 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 32px 32px;
+}
+
+.ri-footer__heading {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Brand col */
+.ri-footer__tagline {
+  margin: 14px 0 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8a9bb0;
+}
+
+/* Social */
+.ri-footer__social { display: flex; gap: 10px; }
+.ri-soc {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #2e3f52;
+  color: #c8d3dc;
+  transition: background 0.15s, color 0.15s;
+}
+.ri-soc:hover { background: #ffb300; color: #0f1923; border-color: #ffb300; }
+
+/* Link lists */
+.ri-footer__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.ri-footer__list a {
+  color: #8a9bb0;
+  font-size: 13.5px;
+  transition: color 0.15s;
+}
+.ri-footer__list a:hover { color: #ffb300; }
+
+/* App badges */
+.ri-footer__app-copy {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: #8a9bb0;
+  line-height: 1.5;
+}
+.ri-footer__badges { display: grid; gap: 10px; }
+.ri-badge-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border: 1px solid #2e3f52;
+  border-radius: 8px;
+  color: #fff;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ri-badge-btn:hover { border-color: #ffb300; background: #1a2636; }
+.ri-badge-btn span { display: flex; flex-direction: column; line-height: 1.25; font-size: 14px; font-weight: 700; }
+.ri-badge-btn small { font-size: 10px; font-weight: 400; color: #8a9bb0; }
+
+/* Divider */
+.ri-footer__divider {
+  height: 1px;
+  background: #1e2d3d;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* Bottom bar */
+.ri-footer__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 18px 32px;
+}
+.ri-footer__copy { margin: 0; font-size: 12.5px; color: #5a6a7a; }
+.ri-footer__copy a { color: #7a8fa0; text-decoration: underline; }
+.ri-footer__copy a:hover { color: #ffb300; }
+.ri-footer__legal { display: flex; gap: 18px; }
+.ri-footer__legal a { font-size: 12.5px; color: #5a6a7a; transition: color 0.15s; }
+.ri-footer__legal a:hover { color: #ffb300; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .ri-footer__main {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .ri-footer__col--brand {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+    gap: 24px;
+  }
+  .ri-footer__tagline { margin: 0; }
+}
+
+@media (max-width: 640px) {
+  .ri-footer__main {
+    grid-template-columns: 1fr 1fr;
+    padding: 28px 18px 22px;
+    gap: 24px;
+  }
+  .ri-footer__col--brand {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+  .ri-footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 18px;
+  }
+}
+</style>

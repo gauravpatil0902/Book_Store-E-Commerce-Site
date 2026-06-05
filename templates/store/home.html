@@ -1,0 +1,229 @@
+{% extends "store/base.html" %}
+{% load store_extras %}
+{% block title %}ReadoIndia - Home{% endblock %}
+
+{% block content %}
+  <section class="hero hero-slider" aria-label="Featured promotions">
+    <div class="hero-slider__viewport" data-hero-slider>
+      <div class="hero-slider__track">
+        <article class="hero-slide hero-slide--reading">
+          <div class="hero-slide__copy">
+            <span class="hero-slide__eyebrow">Weekend book deals</span>
+            <h1>Up to 45% off bestselling books</h1>
+            <p>Build your shelf with fiction, business, classics, and exam reads picked for fast delivery.</p>
+            <a class="hero-slide__cta" href="{% url 'home' %}?sort=price-low">Shop deals</a>
+          </div>
+          <div class="hero-slide__visual" aria-hidden="true">
+            <span class="book-stack book-stack--one"></span>
+            <span class="book-stack book-stack--two"></span>
+            <span class="book-stack book-stack--three"></span>
+          </div>
+        </article>
+
+        <article class="hero-slide hero-slide--prime">
+          <div class="hero-slide__copy">
+            <span class="hero-slide__eyebrow">ReadoIndia special</span>
+            <h1>Fast delivery on your next page-turner</h1>
+            <p>Choose from {{ total_products }} books and keep your reading list moving without waiting around.</p>
+            <a class="hero-slide__cta" href="{% url 'home' %}?sort=featured">Explore books</a>
+          </div>
+          <div class="hero-slide__visual hero-slide__visual--box" aria-hidden="true">
+            <span class="delivery-box"></span>
+            <span class="delivery-book delivery-book--left"></span>
+            <span class="delivery-book delivery-book--right"></span>
+          </div>
+        </article>
+
+        <article class="hero-slide hero-slide--kids">
+          <div class="hero-slide__copy">
+            <span class="hero-slide__eyebrow">Kids and young adult</span>
+            <h1>Stories for curious young readers</h1>
+            <p>Colorful adventures, school favorites, and thoughtful YA picks ready for the next chapter.</p>
+            <a class="hero-slide__cta" href="{% url 'home' %}?category=Childrens">Browse kids books</a>
+          </div>
+          <div class="hero-slide__visual" aria-hidden="true">
+            <span class="book-stack book-stack--four"></span>
+            <span class="book-stack book-stack--five"></span>
+            <span class="book-stack book-stack--six"></span>
+          </div>
+        </article>
+
+        <article class="hero-slide hero-slide--study">
+          <div class="hero-slide__copy">
+            <span class="hero-slide__eyebrow">Study and self growth</span>
+            <h1>Upgrade your goals one book at a time</h1>
+            <p>Find practical reads across science, psychology, business, history, and self help.</p>
+            <a class="hero-slide__cta" href="{% url 'home' %}?category=Self%20Help">Start learning</a>
+          </div>
+          <div class="hero-slide__visual hero-slide__visual--desk" aria-hidden="true">
+            <span class="desk-book desk-book--wide"></span>
+            <span class="desk-book desk-book--tall"></span>
+            <span class="desk-cup"></span>
+          </div>
+        </article>
+      </div>
+
+      <button class="hero-slider__arrow hero-slider__arrow--prev" type="button" aria-label="Previous promotion">
+        <span aria-hidden="true">&#8249;</span>
+      </button>
+      <button class="hero-slider__arrow hero-slider__arrow--next" type="button" aria-label="Next promotion">
+        <span aria-hidden="true">&#8250;</span>
+      </button>
+      <div class="hero-slider__dots" aria-label="Promotion slides"></div>
+    </div>
+  </section>
+  <section class="layout">
+    <aside class="filters">
+      <h2>Filters</h2>
+      <form method="get" action="{% url 'home' %}">
+        <input type="hidden" name="q" value="{{ query }}">
+        <label>
+          Sort by
+          <select name="sort">
+            <option value="featured" {% if sort == "featured" %}selected{% endif %}>Featured</option>
+            <option value="price-low" {% if sort == "price-low" %}selected{% endif %}>Price: Low to high</option>
+            <option value="price-high" {% if sort == "price-high" %}selected{% endif %}>Price: High to low</option>
+            <option value="rating" {% if sort == "rating" %}selected{% endif %}>Customer rating</option>
+          </select>
+        </label>
+        <label>
+          Max price
+          <select name="max_price">
+            <option value="8000" {% if max_price == "8000" %}selected{% endif %}>Rs. 8,000</option>
+            <option value="6500" {% if max_price == "6500" %}selected{% endif %}>Rs. 6,500</option>
+            <option value="4500" {% if max_price == "4500" %}selected{% endif %}>Rs. 4,500</option>
+            <option value="3000" {% if max_price == "3000" %}selected{% endif %}>Rs. 3,000</option>
+          </select>
+        </label>
+        <label>
+  Category
+  <select name="category">
+    <option value="" {% if not category %}selected{% endif %}>All</option>
+    <option value="Travel" {% if category == "Travel" %}selected{% endif %}>Travel</option>
+    <option value="Mystery" {% if category == "Mystery" %}selected{% endif %}>Mystery</option>
+    <option value="Historical Fiction" {% if category == "Historical Fiction" %}selected{% endif %}>Historical Fiction
+    </option>
+    <option value="Sequential Art" {% if category == "Sequential Art" %}selected{% endif %}>Sequential Art</option>
+    <option value="Classics" {% if category == "Classics" %}selected{% endif %}>Classics</option>
+    <option value="Philosophy" {% if category == "Philosophy" %}selected{% endif %}>Philosophy</option>
+    <option value="Romance" {% if category == "Romance" %}selected{% endif %}>Romance</option>
+    <option value="Womens Fiction" {% if category == "Womens Fiction" %}selected{% endif %}>Womens Fiction</option>
+    <option value="Fiction" {% if category == "Fiction" %}selected{% endif %}>Fiction</option>
+    <option value="Childrens" {% if category == "Childrens" %}selected{% endif %}>Childrens</option>
+    <option value="Religion" {% if category == "Religion" %}selected{% endif %}>Religion</option>
+    <option value="Nonfiction" {% if category == "Nonfiction" %}selected{% endif %}>Nonfiction</option>
+    <option value="Music" {% if category == "Music" %}selected{% endif %}>Music</option>
+    <option value="Science Fiction" {% if category == "Science Fiction" %}selected{% endif %}>Science Fiction</option>
+    <option value="Sports And Games" {% if category == "Sports And Games" %}selected{% endif %}>Sports and Games</option>
+    <option value="Fantasy" {% if category == "Fantasy" %}selected{% endif %}>Fantasy</option>
+    <option value="New Adult" {% if category == "New Adult" %}selected{% endif %}>New Adult</option>
+    <option value="Young Adult" {% if category == "Young Adult" %}selected{% endif %}>Young Adult</option>
+    <option value="Science" {% if category == "Science" %}selected{% endif %}>Science</option>
+    <option value="Poetry" {% if category == "Poetry" %}selected{% endif %}>Poetry</option>
+    <option value="Paranormal" {% if category == "Paranormal" %}selected{% endif %}>Paranormal</option>
+    <option value="Art" {% if category == "Art" %}selected{% endif %}>Art</option>
+    <option value="Psychology" {% if category == "Psychology" %}selected{% endif %}>Psychology</option>
+    <option value="Autobiography" {% if category == "Autobiography" %}selected{% endif %}>Autobiography</option>
+    <option value="Parenting" {% if category == "Parenting" %}selected{% endif %}>Parenting</option>
+    <option value="Adult Fiction" {% if category == "Adult Fiction" %}selected{% endif %}>Adult Fiction</option>
+    <option value="Humor" {% if category == "Humor" %}selected{% endif %}>Humor</option>
+    <option value="Horror" {% if category == "Horror" %}selected{% endif %}>Horror</option>
+    <option value="History" {% if category == "History" %}selected{% endif %}>History</option>
+    <option value="Food And Drink" {% if category == "Food And Drink" %}selected{% endif %}>Food and Drink</option>
+    <option value="Christian Fiction" {% if category == "Christian Fiction" %}selected{% endif %}>Christian Fiction</option>
+    <option value="Business" {% if category == "Business" %}selected{% endif %}>Business</option>
+    <option value="Biography" {% if category == "Biography" %}selected{% endif %}>Biography</option>
+    <option value="Thriller" {% if category == "Thriller" %}selected{% endif %}>Thriller</option>
+    <option value="Contemporary" {% if category == "Contemporary" %}selected{% endif %}>Contemporary</option>
+    <option value="Spirituality" {% if category == "Spirituality" %}selected{% endif %}>Spirituality</option>
+    <option value="Academic" {% if category == "Academic" %}selected{% endif %}>Academic</option>
+    <option value="Self Help" {% if category == "Self Help" %}selected{% endif %}>Self Help</option>
+    <option value="Historical" {% if category == "Historical" %}selected{% endif %}>Historical</option>
+    <option value="Christian" {% if category == "Christian" %}selected{% endif %}>Christian</option>
+    <option value="Suspense" {% if category == "Suspense" %}selected{% endif %}>Suspense</option>
+    <option value="Short Stories" {% if category == "Short Stories" %}selected{% endif %}>Short Stories</option>
+    <option value="Novels" {% if category == "Novels" %}selected{% endif %}>Novels</option>
+    <option value="Health" {% if category == "Health" %}selected{% endif %}>Health</option>
+    <option value="Politics" {% if category == "Politics" %}selected{% endif %}>Politics</option>
+    <option value="Cultural" {% if category == "Cultural" %}selected{% endif %}>Cultural</option>
+    <option value="Crime" {% if category == "Crime" %}selected{% endif %}>Crime</option>
+  </select>
+  </label>
+        <button class="primary-btn" type="submit">Apply</button>
+      </form>
+      <p class="filter-note">The scraper loads the full demo catalogue into the store database.</p>
+    </aside>
+
+    <section class="products-wrap">
+      <div class="section-heading">
+        <div>
+          <h2>All books</h2>
+          <p>{{ total_products }} products found - page {{ page_obj.number }} of {{ paginator.num_pages }}</p>
+        </div>
+        {% if request.GET.q or request.GET.category or request.GET.max_price or request.GET.sort %}
+          <a class="ghost-btn" href="{% url 'home' %}">Clear filters</a>
+        {% endif %}
+      </div>  {# ← this was missing #}
+
+      <div class="products">
+        {% for product in products %}
+          <article class="product-card">
+            <a class="product-media" href="{% url 'product_detail' product.id %}">
+              <img src="{{ product.image_url }}" alt="{{ product.title }}">
+            </a>
+            <div class="product-info">
+              <h3><a href="{% url 'product_detail' product.id %}">{{ product.title }}</a></h3>
+              <div class="stars" aria-label="{{ product.rating }} star rating">{{ product.rating|stars }}</div>
+              <div class="price-row">
+                <span class="price">{{ product.price|inr }}</span>
+                <span class="mrp">{{ product.mrp|inr }}</span>
+              </div>
+              <span class="stock">In stock - fast delivery</span>
+              <form class="card-actions" method="post" action="{% url 'add_to_cart' product.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button class="add-cart" type="submit">Add to Cart</button>
+              </form>
+              <form method="post" action="{% url 'buy_now' product.id %}">
+                {% csrf_token %}
+                <button class="buy-now" type="submit">Buy Now</button>
+              </form>
+            </div>
+          </article>
+        {% empty %}
+          <div class="empty-state">No books found.</div>
+        {% endfor %}
+      </div>
+
+      {% if paginator.num_pages > 1 %}
+        <nav class="pagination" aria-label="Book pages">
+          {% if page_obj.has_previous %}
+            <a class="page-arrow prev-page" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page">
+              <span aria-hidden="true">←</span>
+              <strong>Previous page</strong>
+            </a>
+          {% else %}
+            <span class="page-arrow prev-page disabled" aria-disabled="true">
+              <span aria-hidden="true">←</span>
+              <strong>Previous page</strong>
+            </span>
+          {% endif %}
+
+          <span class="page-status">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+
+          {% if page_obj.has_next %}
+            <a class="page-arrow next-page" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">
+              <strong>Next page</strong>
+              <span aria-hidden="true">→</span>
+            </a>
+          {% else %}
+            <span class="page-arrow next-page disabled" aria-disabled="true">
+              <strong>Next page</strong>
+              <span aria-hidden="true">→</span>
+            </span>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

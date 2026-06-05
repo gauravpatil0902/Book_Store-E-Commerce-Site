@@ -1,0 +1,28 @@
+{% extends "store/base.html" %}
+{% block title %}{% if mode == "signup" %}Sign up{% else %}Sign in{% endif %} - BookKart{% endblock %}
+
+{% block content %}
+  <section class="auth-page">
+    <form class="auth-card" method="post">
+      {% csrf_token %}
+      <h1>{% if mode == "signup" %}Create account{% else %}Sign in{% endif %}</h1>
+      <p>{% if mode == "signup" %}Create an account to save your order history.{% else %}Sign in for checkout and My Orders.{% endif %}</p>
+
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <label>
+          {{ field.label }}
+          {{ field }}
+          {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </label>
+      {% endfor %}
+
+      <button class="primary-btn" type="submit">{% if mode == "signup" %}Sign up{% else %}Sign in{% endif %}</button>
+      {% if mode == "signup" %}
+        <a href="{% url 'signin' %}">Already have account? Sign in</a>
+      {% else %}
+        <a href="{% url 'signup' %}">New user? Sign up</a>
+      {% endif %}
+    </form>
+  </section>
+{% endblock %}

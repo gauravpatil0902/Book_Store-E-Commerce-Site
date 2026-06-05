@@ -1,0 +1,68 @@
+{% extends "store/base.html" %}
+{% load store_extras %}
+{% block title %}{{ product.title }} - BookKart{% endblock %}
+
+{% block content %}
+  <section class="detail-page">
+    <a class="ghost-btn back-link" href="{% url 'home' %}">Back to books</a>
+
+    <article class="detail-main panel">
+      <div class="detail-media">
+        <img src="{{ product.image_url }}" alt="{{ product.title }}">
+      </div>
+
+      <div class="detail-info">
+        <h1>{{ product.title }}</h1>
+        <div class="stars" aria-label="{{ product.rating }} star rating">{{ product.rating|stars }}</div>
+        <div class="detail-price">
+          <span class="price">{{ product.price|inr }}</span>
+          <span class="mrp">{{ product.mrp|inr }}</span>
+        </div>
+        <p class="stock">In stock - fast delivery</p>
+        <p class="detail-copy">
+          This book is available from the scraped catalogue and can be added to your Book cart without leaving the app.
+        </p>
+
+        <div class="detail-actions">
+          <form method="post" action="{% url 'add_to_cart' product.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="add-cart" type="submit">Add to Cart</button>
+          </form>
+          <form method="post" action="{% url 'buy_now' product.id %}">
+            {% csrf_token %}
+            <button class="buy-now" type="submit">Buy Now</button>
+          </form>
+        </div>
+      </div>
+    </article>
+
+    {% if related_products %}
+      <section class="related-books">
+        <div class="section-heading">
+          <div>
+            <h2>More highly rated books</h2>
+            <p>Recommended from the same store catalogue</p>
+          </div>
+        </div>
+        <div class="products">
+          {% for related in related_products %}
+            <article class="product-card">
+              <a class="product-media" href="{% url 'product_detail' related.id %}">
+                <img src="{{ related.image_url }}" alt="{{ related.title }}">
+              </a>
+              <div class="product-info">
+                <h3><a href="{% url 'product_detail' related.id %}">{{ related.title }}</a></h3>
+                <div class="stars" aria-label="{{ related.rating }} star rating">{{ related.rating|stars }}</div>
+                <div class="price-row">
+                  <span class="price">{{ related.price|inr }}</span>
+                  <span class="mrp">{{ related.mrp|inr }}</span>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

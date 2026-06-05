@@ -1,0 +1,578 @@
+{% extends "store/base.html" %}
+{% load store_extras %}
+{% block title %}Order #{{ order.id }} - ReadoIndia{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Amazon+Ember:wght@300;400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange:      #FF9900;
+    --link:        #0066c0;
+    --link-hover:  #c7511f;
+    --border:      #ddd;
+    --border-dark: #c0c0c0;
+    --card:        #ffffff;
+    --head:        #f0f2f2;
+    --bg:          #f7f7f7;
+    --text:        #111111;
+    --muted:       #555555;
+    --sub:         #888888;
+    --green:       #007600;
+    --shadow:      0 2px 8px rgba(0,0,0,.08);
+    --radius:      8px;
+  }
+
+  body {
+    font-family: 'Amazon Ember', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; color: var(--link-hover); }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  /* Breadcrumb */
+  .breadcrumb { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .breadcrumb span { margin: 0 5px; color: var(--sub); }
+
+  /* Page title */
+  .page-title {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap;
+    gap: 10px; margin-bottom: 22px;
+  }
+  .page-title h1 { font-size: 26px; font-weight: 400; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 16px; border: 1px solid var(--border-dark);
+    border-radius: 20px; font-size: 13px; color: var(--text);
+    background: linear-gradient(to bottom, #f7f8fa, #e8eaed);
+    transition: border-color .15s, color .15s;
+  }
+  .back-btn:hover { border-color: var(--link); color: var(--link); text-decoration: none; background: linear-gradient(to bottom, #eef0f3, #dfe1e6); }
+
+  /* Card */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 18px;
+    overflow: hidden; box-shadow: var(--shadow);
+  }
+  .card-head {
+    background: var(--head); padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .card-head h2 {
+    font-size: 14px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px; color: var(--muted);
+  }
+  .card-body { padding: 18px 20px; }
+
+  /* Meta row */
+  .meta-row { display: flex; flex-wrap: wrap; gap: 24px; }
+  .meta-col { min-width: 120px; }
+  .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: .7px; color: var(--sub); font-weight: 700; margin-bottom: 4px; }
+  .meta-value { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* Status badge */
+  .status-badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: capitalize; }
+  .status-confirmed { background: #e8f0fe; color: #0055a5; border: 1px solid #b0c8f0; }
+  .status-packed    { background: #fef5e4; color: #7a4f00; border: 1px solid #f0d080; }
+  .status-shipped   { background: #f3f0fe; color: #4a35a0; border: 1px solid #c4b8f0; }
+  .status-delivered { background: #e7f5e7; color: #007600; border: 1px solid #b8dfb8; }
+
+  /* ── Animated Truck Tracking ── */
+  .tracking-scene {
+    position: relative;
+    margin: 8px 0 24px;
+    padding-bottom: 8px;
+  }
+
+  /* Road strip */
+  .road-strip {
+    position: relative;
+    height: 56px;
+    background: #e8e8e8;
+    border-radius: 6px;
+    overflow: visible;
+    margin-bottom: 28px;
+    border: 1px solid #d0d0d0;
+  }
+
+  /* Dashed centre line */
+  .road-strip::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    transform: translateY(-50%);
+    height: 3px;
+    background: repeating-linear-gradient(90deg, #fff 0, #fff 18px, transparent 18px, transparent 32px);
+  }
+
+  /* Orange progress fill */
+  .road-progress {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    background: rgba(255,153,0,.18);
+    border-radius: 6px 0 0 6px;
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    border-right: 2px dashed var(--orange);
+  }
+
+  /* Truck */
+  .truck-wrap {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: left 1.2s cubic-bezier(.4,0,.2,1);
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.18));
+  }
+
+  /* Milestone pins on road */
+  .road-pin {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--border-dark);
+    z-index: 5;
+    transition: border-color .3s, background .3s;
+  }
+  .road-pin.done   { background: var(--orange); border-color: var(--orange); }
+  .road-pin.active { background: #fff; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,153,0,.25); }
+
+  /* Step labels below road */
+  .tracking-steps {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0;
+    position: relative;
+  }
+  .t-step {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; flex: 1; text-align: center;
+  }
+  .t-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 3px solid var(--border);
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 900; color: transparent;
+    transition: all .3s;
+  }
+  .t-dot.done   { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .t-dot.active { background: #fff; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,153,0,.22); }
+
+  .t-label { font-size: 11px; color: var(--sub); text-align: center; line-height: 1.3; }
+  .t-label.done, .t-label.active { color: var(--text); font-weight: 600; }
+
+  /* Connector line under dots */
+  .tracking-steps::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 10%; right: 10%;
+    height: 2px; background: var(--border); z-index: 0;
+  }
+  .t-step { z-index: 1; }
+
+  /* ETA box */
+  .eta-strip {
+    display: flex; align-items: center; gap: 10px;
+    background: #e7f5e7; border: 1px solid #b8dfb8;
+    border-radius: 6px; padding: 10px 14px; margin-top: 4px;
+    font-size: 13px;
+  }
+  .eta-strip .eta-icon { font-size: 22px; }
+  .eta-strip strong { color: #007600; }
+  .eta-strip span   { color: #555; }
+
+  /* Items table */
+  .items-table { width: 100%; border-collapse: collapse; }
+  .items-table thead tr { border-bottom: 1px solid var(--border); }
+  .items-table th { padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: .7px; color: var(--sub); font-weight: 700; text-align: left; }
+  .items-table th:last-child { text-align: right; }
+  .items-table tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .1s; }
+  .items-table tbody tr:hover { background: #fafafa; }
+  .items-table tbody tr:last-child { border-bottom: none; }
+  .items-table td { padding: 14px 10px; vertical-align: top; }
+  .items-table td:last-child { text-align: right; font-weight: 700; color: var(--text); }
+
+  .item-cover { width: 56px; height: 72px; object-fit: contain; border: 1px solid var(--border); border-radius: 4px; background: #fafafa; }
+  .item-cover-placeholder { width: 56px; height: 72px; border: 1px solid var(--border); border-radius: 4px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #aaa; }
+
+  .item-title-link { font-size: 14px; color: var(--link); font-weight: 500; display: block; margin-bottom: 3px; line-height: 1.4; }
+  .item-title-link:hover { color: var(--link-hover); }
+  .item-sub { font-size: 12px; color: var(--sub); margin-bottom: 2px; }
+
+  /* Totals */
+  .totals-block { display: flex; justify-content: flex-end; }
+  .totals-inner { width: 260px; }
+  @media (max-width: 480px) { .totals-inner { width: 100%; } }
+  .tot-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: var(--muted); border-bottom: 1px solid #f0f0f0; }
+  .tot-row:last-child { border-bottom: none; }
+  .tot-row span:last-child { color: var(--text); }
+  .tot-row.grand { font-size: 16px; font-weight: 700; color: var(--text); padding-top: 10px; margin-top: 4px; border-top: 2px solid var(--border); border-bottom: none; }
+  .tot-row.grand span:last-child { color: var(--orange); }
+
+  /* Two-col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  @media (max-width: 580px) { .two-col { grid-template-columns: 1fr; } }
+
+  .info-line { font-size: 13px; color: var(--text); margin-bottom: 4px; line-height: 1.5; }
+  .info-line .lbl { color: var(--sub); font-size: 12px; }
+
+  /* Help / action buttons */
+  .help-btn {
+    display: block; padding: 8px 14px;
+    border: 1px solid var(--border-dark); border-radius: 20px;
+    font-size: 13px; color: var(--text); text-align: center;
+    background: linear-gradient(to bottom, #f7f8fa, #e8eaed);
+    cursor: pointer; width: 100%;
+    transition: border-color .15s, color .15s;
+    text-decoration: none;
+  }
+  .help-btn:hover { border-color: var(--link); color: var(--link); text-decoration: none; background: linear-gradient(to bottom, #eef0f3, #dfe1e6); }
+  .help-btn.danger { border-color: #f0b0b0; color: #a50000; background: #fce8e6; }
+  .help-btn.danger:hover { border-color: #a50000; background: #fbd8d6; color: #7a0000; }
+
+  /* Modals */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.55); z-index: 1000;
+    align-items: center; justify-content: center; padding: 16px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px;
+    max-width: 400px; width: 90%; text-align: center;
+    box-shadow: 0 16px 48px rgba(0,0,0,.16);
+  }
+  .modal-box h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+  .modal-box p  { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; }
+  .modal-btn {
+    padding: 9px 22px; border-radius: 20px; font-size: 13px;
+    cursor: pointer; border: 1px solid var(--border-dark);
+    background: linear-gradient(to bottom, #f7f8fa, #e8eaed);
+    color: var(--text); transition: all .15s;
+  }
+  .modal-btn:hover { background: linear-gradient(to bottom, #eef0f3, #dfe1e6); border-color: var(--link); }
+  .modal-btn.red { border-color: #f0b0b0; color: #a50000; background: #fce8e6; }
+  .modal-btn.red:hover { background: #fbd8d6; border-color: #a50000; }
+
+  .support-row { padding: 12px; background: #fafafa; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
+  .support-row .lbl { font-size: 11px; color: var(--sub); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .support-row a { font-size: 14px; color: var(--link); }
+  .support-row .hours { font-size: 11px; color: var(--sub); margin-top: 3px; }
+</style>
+
+<div class="wrap">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a href="{% url 'home' %}">Home</a>
+    <span>›</span>
+    <a href="{% url 'orders' %}">Your Orders</a>
+    <span>›</span>
+    <span>Order #{{ order.id }}</span>
+  </nav>
+
+  <!-- Page title -->
+  <div class="page-title">
+    <h1>Order #{{ order.id }}</h1>
+    <a class="back-btn" href="{% url 'orders' %}">← Back to Orders</a>
+  </div>
+
+  <!-- 1. Order Summary -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Order Summary</h2>
+      <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span>
+    </div>
+    <div class="card-body">
+      <div class="meta-row">
+        <div class="meta-col">
+          <div class="meta-label">Order Placed</div>
+          <div class="meta-value">{{ order.order_date|date:"d M Y" }}</div>
+        </div>
+        <div class="meta-col">
+          <div class="meta-label">Order ID</div>
+          <div class="meta-value">#{{ order.id }}</div>
+        </div>
+        <div class="meta-col">
+          <div class="meta-label">Items</div>
+          <div class="meta-value">{{ order.items.count }}</div>
+        </div>
+        <div class="meta-col">
+          <div class="meta-label">Total</div>
+          <div class="meta-value" style="color:var(--orange)">{{ order.total|inr }}</div>
+        </div>
+        {% if order.delivery_date %}
+        <div class="meta-col">
+          <div class="meta-label">{% if order.status == 'delivered' %}Delivered On{% else %}Expected By{% endif %}</div>
+          <div class="meta-value">{{ order.delivery_date|date:"d M Y" }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Animated Truck Tracking -->
+  <div class="card" id="tracking">
+    <div class="card-head"><h2>Tracking</h2></div>
+    <div class="card-body">
+      {% with s=order.status %}
+
+      <div class="tracking-scene">
+        <!-- Road with animated truck -->
+        <div class="road-strip" id="roadStrip">
+          <div class="road-progress" id="roadProgress"></div>
+
+          <!-- Milestone pins on road at 0%, 33%, 66%, 100% -->
+          <div class="road-pin" id="pin0" style="left:3%"></div>
+          <div class="road-pin" id="pin1" style="left:36%"></div>
+          <div class="road-pin" id="pin2" style="left:69%"></div>
+          <div class="road-pin" id="pin3" style="left:97%"></div>
+
+          <!-- Truck SVG -->
+          <div class="truck-wrap" id="truckEl" style="left:3%">
+            <svg width="52" height="30" viewBox="0 0 52 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Cab -->
+              <rect x="30" y="6" width="20" height="18" rx="2" fill="#e87722"/>
+              <!-- Window -->
+              <rect x="32" y="8" width="8" height="7" rx="1" fill="#b3dff5"/>
+              <!-- Body -->
+              <rect x="2" y="10" width="28" height="14" rx="2" fill="#FF9900"/>
+              <!-- Body stripe -->
+              <rect x="2" y="20" width="28" height="4" rx="0" fill="#e88800"/>
+              <!-- Wheels -->
+              <circle cx="10" cy="26" r="4" fill="#333"/><circle cx="10" cy="26" r="2" fill="#aaa"/>
+              <circle cx="40" cy="26" r="4" fill="#333"/><circle cx="40" cy="26" r="2" fill="#aaa"/>
+              <!-- ReadoIndia text area -->
+              <rect x="4" y="12" width="24" height="6" rx="1" fill="#ffb732" opacity=".5"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Step indicators -->
+        <div class="tracking-steps">
+          <div class="t-step">
+            <div class="t-dot {% if s == 'packed' or s == 'shipped' or s == 'delivered' %}done{% elif s == 'confirmed' %}active{% endif %}">{% if s == 'packed' or s == 'shipped' or s == 'delivered' %}✓{% endif %}</div>
+            <div class="t-label {% if s == 'confirmed' %}active{% elif s == 'packed' or s == 'shipped' or s == 'delivered' %}done{% endif %}">Order<br>Confirmed</div>
+          </div>
+          <div class="t-step">
+            <div class="t-dot {% if s == 'shipped' or s == 'delivered' %}done{% elif s == 'packed' %}active{% endif %}">{% if s == 'shipped' or s == 'delivered' %}✓{% endif %}</div>
+            <div class="t-label {% if s == 'packed' %}active{% elif s == 'shipped' or s == 'delivered' %}done{% endif %}">Packed</div>
+          </div>
+          <div class="t-step">
+            <div class="t-dot {% if s == 'delivered' %}done{% elif s == 'shipped' %}active{% endif %}">{% if s == 'delivered' %}✓{% endif %}</div>
+            <div class="t-label {% if s == 'shipped' %}active{% elif s == 'delivered' %}done{% endif %}">Shipped</div>
+          </div>
+          <div class="t-step">
+            <div class="t-dot {% if s == 'delivered' %}done{% endif %}">{% if s == 'delivered' %}✓{% endif %}</div>
+            <div class="t-label {% if s == 'delivered' %}done{% endif %}">Delivered</div>
+          </div>
+        </div>
+      </div>
+
+      {% if order.delivery_date %}
+      <div class="eta-strip">
+        <span class="eta-icon">📅</span>
+        <div>
+          <strong>{% if s == 'delivered' %}Delivered on{% else %}Estimated delivery:{% endif %} {{ order.delivery_date|date:"d M Y" }}</strong>
+          <span style="margin-left:12px;font-size:12px">Order placed {{ order.order_date|date:"d M Y" }}</span>
+        </div>
+      </div>
+      {% endif %}
+
+      <script>
+        (function(){
+          var status = "{{ order.status }}";
+          var posMap   = { confirmed: 3, packed: 36, shipped: 69, delivered: 97 };
+          var progMap  = { confirmed: 3, packed: 36, shipped: 69, delivered: 100 };
+          var pinIndex = { confirmed: 0, packed: 1, shipped: 2, delivered: 3 };
+
+          var pos  = posMap[status]  || 3;
+          var prog = progMap[status] || 3;
+          var idx  = pinIndex[status] !== undefined ? pinIndex[status] : 0;
+
+          // Animate after paint
+          requestAnimationFrame(function(){
+            setTimeout(function(){
+              document.getElementById('truckEl').style.left = pos + '%';
+              document.getElementById('roadProgress').style.width = prog + '%';
+
+              // Light up pins up to current
+              for (var i = 0; i <= idx; i++) {
+                var pin = document.getElementById('pin' + i);
+                if (pin) {
+                  pin.classList.remove('active');
+                  pin.classList.add(i < idx ? 'done' : 'active');
+                }
+              }
+            }, 400);
+          });
+        })();
+      </script>
+
+      {% endwith %}
+    </div>
+  </div>
+
+  <!-- 3. Items -->
+  <div class="card">
+    <div class="card-head"><h2>Items Ordered</h2></div>
+    <div class="card-body" style="padding:0 20px">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width:60px"></th>
+            <th>Book</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+          <tr>
+            <td>
+              {% if item.product.image_url %}
+                <img class="item-cover" src="{{ item.product.image_url }}" alt="{{ item.product.title }}">
+              {% else %}
+                <div class="item-cover-placeholder">📚</div>
+              {% endif %}
+            </td>
+            <td>
+              <a class="item-title-link" href="{% url 'product_detail' item.product.pk %}">{{ item.product.title }}</a>
+              {% if item.product.author %}<div class="item-sub">by {{ item.product.author }}</div>{% endif %}
+              {% if item.product.format %}<div class="item-sub">{{ item.product.format }}</div>{% endif %}
+            </td>
+            <td style="color:var(--sub)">{{ item.quantity }}</td>
+            <td style="color:var(--sub)">{{ item.price|inr }}</td>
+            <td>{{ item.line_total|inr }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-body" style="border-top:1px solid var(--border)">
+      <div class="totals-block">
+        <div class="totals-inner">
+          <div class="tot-row"><span>Subtotal</span><span>{{ order.total|inr }}</span></div>
+          <div class="tot-row"><span>Shipping</span><span style="color:var(--green)">Free</span></div>
+          <div class="tot-row grand"><span>Total Paid</span><span>{{ order.total|inr }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Delivery & Help -->
+  <div class="two-col" id="help">
+    <div class="card">
+      <div class="card-head"><h2>Delivery Info</h2></div>
+      <div class="card-body">
+        {% if order.contact_number %}
+          <div class="info-line"><span class="lbl">Contact: </span>{{ order.contact_number }}</div>
+        {% endif %}
+        {% if order.delivery_date %}
+          <div class="info-line">
+            <span class="lbl">{% if order.status == 'delivered' %}Delivered: {% else %}Expected: {% endif %}</span>
+            {{ order.delivery_date|date:"d M Y" }}
+          </div>
+        {% endif %}
+        <div class="info-line">
+          <span class="lbl">Status: </span>
+          <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Need Help?</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+        {% if order.status == 'confirmed' or order.status == 'packed' %}
+        <button class="help-btn danger" onclick="document.getElementById('cancelModal').classList.add('open')">
+          Cancel Order
+        </button>
+        {% endif %}
+        {% if order.status == 'cancelled' %}
+        <div style="padding:8px 14px;border:1px solid #f0b0b0;border-radius:20px;font-size:13px;color:#a50000;text-align:center;background:#fce8e6">
+          Order Cancelled
+        </div>
+        {% endif %}
+        {% if order.status == 'delivered' %}
+        <a href="#" class="help-btn">Return / Replace</a>
+        <a href="#" class="help-btn">Write a Review</a>
+        {% endif %}
+        <button class="help-btn" onclick="document.getElementById('supportModal').classList.add('open')">
+          Contact Support
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.wrap -->
+
+<!-- Cancel Modal -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+    <h3>Cancel Order #{{ order.id }}?</h3>
+    <p>This action cannot be undone. Your order will be cancelled and a refund will be processed in 5–7 business days.</p>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="document.getElementById('cancelModal').classList.remove('open')">Keep Order</button>
+      <form method="post" action="{% url 'cancel_order' order.id %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="modal-btn red">Yes, Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Support Modal -->
+<div class="modal-overlay" id="supportModal">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:12px">🎧</div>
+    <h3>Contact Support</h3>
+    <div style="text-align:left;margin-bottom:20px">
+      <div class="support-row">
+        <div class="lbl">Email</div>
+        <a href="mailto:support@readoindia.com">support@readoindia.com</a>
+      </div>
+      <div class="support-row">
+        <div class="lbl">Phone</div>
+        <a href="tel:+911800123456">+91 1800-123-456</a>
+        <div class="hours">Mon–Sat, 9AM–6PM IST</div>
+      </div>
+    </div>
+    <button class="modal-btn" onclick="document.getElementById('supportModal').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<script>
+  // Close modals on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(function(el){
+    el.addEventListener('click', function(e){
+      if (e.target === el) el.classList.remove('open');
+    });
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(function(el){ el.classList.remove('open'); });
+  });
+</script>
+
+{% endblock %}

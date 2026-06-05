@@ -1,0 +1,56 @@
+{% extends "store/base.html" %}
+{% block title %}Your Account - BookKart{% endblock %}
+
+{% block content %}
+  <section class="account-page">
+    <div class="section-heading">
+      <div>
+        <h1>Your Account</h1>
+        <p>Manage your delivery details and contact information.</p>
+      </div>
+      <a class="primary-btn account-edit" href="{% url 'edit_profile' %}">Edit information</a>
+    </div>
+
+    <div class="account-grid">
+      <article class="panel account-card">
+        <h2>Profile</h2>
+        <div class="account-profile-head">
+          <span class="profile-ring large" style="--complete: {{ profile.completion_percent }}%">
+            {% if profile.photo_display_url %}
+              <img src="{{ profile.photo_display_url }}" alt="{{ user.first_name|default:user.username }}">
+            {% else %}
+              <span>{{ user.first_name|default:user.username|first|upper }}</span>
+            {% endif %}
+          </span>
+          <div>
+            <strong>{{ profile.completion_percent }}% complete</strong>
+            <small>Add more profile details for faster checkout.</small>
+          </div>
+        </div>
+        <dl>
+          <div>
+            <dt>Name</dt>
+            <dd>{{ user.first_name|default:user.username }}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{{ user.email|default:"Not added" }}</dd>
+          </div>
+          <div>
+            <dt>Contact number</dt>
+            <dd>{{ profile.contact_number|default:"Not added" }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="panel account-card">
+        <h2>Default delivery address</h2>
+        {% if profile.full_address %}
+          <address>{{ profile.full_address|linebreaksbr }}</address>
+        {% else %}
+          <p class="muted-text">No address added yet.</p>
+        {% endif %}
+      </article>
+    </div>
+  </section>
+{% endblock %}

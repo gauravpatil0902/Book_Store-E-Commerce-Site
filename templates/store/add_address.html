@@ -1,0 +1,24 @@
+{% extends "store/base.html" %}
+{% block title %}Add Address — ReadoIndia{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <h1>Add New Address</h1>
+    <p>This address will be used for delivery.</p>
+    <form method="post" style="display:grid; gap:14px;">
+      {% csrf_token %}
+      {% for field in form %}
+        <label>
+          {{ field.label }}
+          {{ field }}
+          {% if field.errors %}
+            <span class="field-error">{{ field.errors.0 }}</span>
+          {% endif %}
+        </label>
+      {% endfor %}
+      <button type="submit" class="primary-btn">Save Address</button>
+      <a href="{% url 'account' %}" style="text-align:center; color: var(--muted);">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "store/base.html" %}
+{% load store_extras %}
+{% block title %}Checkout - BookKart{% endblock %}
+
+{% block content %}
+<section class="page-grid">
+  <form class="panel checkout-form" method="post">
+    {% csrf_token %}
+    <h1>Checkout</h1>
+    <p class="form-note">Your saved contact number and address are filled in automatically. You can edit them for this
+      order.</p>
+    {{ form.non_field_errors }}
+    <div class="checkout-section">
+      <h2>Delivery details</h2>
+      {% for field in form %}
+        {% if field.name != "payment_method" and field.name != "payment_amount" %}
+          <label>
+            {{ field.label }}
+            {{ field }}
+            {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+          </label>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="checkout-section payment-box">
+      <h2>Payment</h2>
+      <p class="form-note">Demo payment only. Enter the order total to confirm, no real money is charged.</p>
+      <label>
+        {{ form.payment_method.label }}
+        {{ form.payment_method }}
+        {% for error in form.payment_method.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+      </label>
+      <label>
+        {{ form.payment_amount.label }}
+        {{ form.payment_amount }}
+        {% for error in form.payment_amount.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+      </label>
+    </div>
+    <button class="primary-btn" type="submit">Place order</button>
+  </form>
+
+  <aside class="summary panel">
+    <h2>Order summary</h2>
+    {% for line in lines %}
+    <div class="mini-line">
+      <span>{{ line.quantity }} x {{ line.product.title }}</span>
+      <strong>{{ line.line_total|inr }}</strong>
+    </div>
+    {% endfor %}
+    <div class="totals"><span>Subtotal</span><strong>{{ subtotal|inr }}</strong></div>
+    <div class="totals"><span>Delivery</span><strong>{% if delivery %}{{ delivery|inr }}{% else %}Free{% endif %}</strong></div>
+    <div class="totals grand"><span>Total</span><strong>{{ total|inr }}</strong></div>
+  </aside>
+</section>
+{% endblock %}
