@@ -216,7 +216,7 @@
     a.addEventListener('click', function (e) {
       e.preventDefault();
       var selected = getSelectedIds();
-      var base     = a.getAttribute('href'); /* e.g. /cart/update/3/inc/ */
+      var base     = a.getAttribute('href');
       window.location.href = base + '?' + qs;
       if (selected.length) {
         var qs = selected.map(function (id) { return 'selected_ids=' + id; }).join('&');

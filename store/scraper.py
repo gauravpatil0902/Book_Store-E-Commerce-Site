@@ -11,7 +11,6 @@ def fetch_catalog(start_url="https://books.toscrape.com/", timeout=20):
     books = []
     seen_urls = set()
 
-    # First get all category URLs from homepage
     with urlopen(start_url, timeout=timeout) as response:
         source = response.read().decode("utf-8", errors="ignore")
 

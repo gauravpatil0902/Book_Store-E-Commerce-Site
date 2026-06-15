@@ -409,7 +409,7 @@
           var prog = progMap[status] || 3;
           var idx  = pinIndex[status] !== undefined ? pinIndex[status] : 0;
 
-          // Animate after paint
+         
           requestAnimationFrame(function(){
             setTimeout(function(){
               document.getElementById('truckEl').style.left = pos + '%';
@@ -525,7 +525,7 @@
     </div>
   </div>
 
-</div><!-- /.wrap -->
+</div>
 
 <!-- Cancel Modal -->
 <div class="modal-overlay" id="cancelModal">
@@ -564,7 +564,6 @@
 </div>
 
 <script>
-  // Close modals on backdrop click
   document.querySelectorAll('.modal-overlay').forEach(function(el){
     el.addEventListener('click', function(e){
       if (e.target === el) el.classList.remove('open');
